@@ -1,0 +1,37 @@
+{
+	"include": ["src"],
+	"exclude": ["src/**/*.spec.ts"],
+
+	"compilerOptions": {
+		"rootDir": "src",
+
+		"lib": ["es2015", "dom", "dom.iterable"],
+		"target": "es2015",
+
+		"declaration": true,
+		"declarationDir": "dist/types",
+
+		"noEmitOnError": true,
+		"noErrorTruncation": true,
+
+		"module": "esnext",
+		"moduleResolution": "node",
+		"resolveJsonModule": true,
+		"allowSyntheticDefaultImports": true,
+
+		// Hides exports flagged with @internal from the d.ts output
+		"stripInternal": true,
+
+		// TODO: error all the things
+		//"strict": true,
+		"noImplicitThis": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"typeRoots": ["./node_modules/@types"],
+
+		"importsNotUsedAsValues": "error",
+		"isolatedModules": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true
+	}
+}

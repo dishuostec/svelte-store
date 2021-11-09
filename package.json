@@ -1,0 +1,45 @@
+{
+	"name": "@dishuostec/svelte-store",
+	"version": "0.1.0",
+	"description": "",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/dishuostec/svelte-store.git"
+	},
+	"author": "dishuostec",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/dishuostec/svelte-store/issues"
+	},
+	"homepage": "https://github.com/dishuostec/svelte-store#readme",
+	"publishConfig": {
+		"access": "public",
+		"registry": "http://npm.release",
+		"directory": "dist"
+	},
+	"scripts": {
+		"build": "node scripts/build.js",
+		"tsd": "tsc --emitDeclarationOnly",
+		"lint": "prettier --check --plugin-search-dir=. . && eslint .",
+		"format": "prettier --write --plugin-search-dir=. .",
+		"test": "mocha",
+		"prepublishOnly": "pnpm test && pnpm build && pnpm tsd"
+	},
+	"devDependencies": {
+		"@types/mocha": "^9.0.0",
+		"@types/node": "^16.11.7",
+		"@typescript-eslint/eslint-plugin": "^4.33.0",
+		"@typescript-eslint/parser": "^4.33.0",
+		"esbuild": "^0.13.13",
+		"eslint": "^7.32.0",
+		"eslint-config-prettier": "^8.3.0",
+		"eslint-plugin-import": "^2.24.2",
+		"fast-glob": "^3.2.7",
+		"mocha": "^9.1.3",
+		"prettier": "^2.4.1",
+		"sucrase": "^3.20.3",
+		"svelte": "^3.44.1",
+		"typescript": "^4.4.3"
+	},
+	"type": "module"
+}
