@@ -2,31 +2,39 @@ import type { Readable } from 'svelte/store';
 import type { CustomWritable, Equal, DerivedMapReaction } from '../equal';
 import { writable as writable_custom, derived_map } from '../equal';
 
-type notUndefined = string | number | boolean | symbol | object;
+interface NotReadable {
+	subscribe: never;
+}
 
-type Type<T extends notUndefined> = T;
+type Props = Record<string, Readable<any> | (any & NotReadable)>
 
-type PropsStore<T extends Record<string, any>> = {
-	[K in keyof T]: T[K] extends Type<infer R> ? CustomWritable<R> : never;
+type PropsStore<T extends Props> = {
+	[K in keyof T]: T[K] extends Readable<infer R>
+		? Readable<R>
+		: CustomWritable<T[K]>;
 };
 
-type PropsMapStore<T> = PropsStore<T> & Readable<T>;
+type PropsMapStore<T extends Props> = PropsStore<T> & Readable<T>;
 
-function record<T extends Record<string, any>>(
+function record<T extends Props>(
 	equal: Equal,
 	props: T,
 	fn: DerivedMapReaction<PropsStore<T>, T>,
 	init_value?: T,
 ): PropsMapStore<T> {
-	const props_store = {} as PropsStore<T>;
+	const stores = {} as PropsStore<T>;
 
-	for (const propsKey in props) {
-		props_store[propsKey] = writable_custom(equal, props[propsKey]);
-	}
+	Object.entries(props).forEach(([key, value]: [keyof T, any]) => {
+		if (typeof value === 'object' && value != null && 'subscribe' in value) {
+			stores[key] = value;
+		} else {
+			stores[key] = writable_custom(equal, value);
+		}
+	});
 
-	const store = derived_map(undefined, props_store, fn, init_value);
+	const store = derived_map(equal, stores, fn, init_value);
 
-	return Object.assign(props_store, store);
+	return Object.assign(stores, store);
 }
 
 export interface RecordFactory {
