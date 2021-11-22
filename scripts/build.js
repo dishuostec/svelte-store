@@ -24,6 +24,7 @@ function build(file) {
 	const is_default_module = name === 'index';
 
 	const import_file = normalize(dir, name + '.js');
+	const type_file = normalize('types', dir, name + '.d.ts');
 	// const require_file = normalize(dir, name + '.cjs');
 
 	const default_options = {
@@ -67,6 +68,7 @@ function build(file) {
 
 	return {
 		[module_name]: {
+			types: type_file,
 			import: import_file,
 			// require: require_file,
 		},
