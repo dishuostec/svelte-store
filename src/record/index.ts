@@ -2,55 +2,63 @@ import type { Readable } from 'svelte/store';
 import type { CustomWritable, Equal, DerivedMapReaction } from '../equal';
 import { writable as writable_custom, derived_map } from '../equal';
 
-interface NotReadable {
-	subscribe: never;
+interface NoSubscribe {
+	subscribe?: never;
+
+	[k: string | number]: any;
 }
 
-type Props = Record<string, Readable<any> | (any & NotReadable)>
+type Props = Record<string, Readable<any> | null | undefined | number | boolean | string | NoSubscribe> & NoSubscribe;
 
-type PropsStore<T extends Props> = {
-	[K in keyof T]: T[K] extends Readable<infer R>
-		? Readable<R>
-		: CustomWritable<T[K]>;
-};
+type StoreMap<P extends Props> = Omit<{
+	[K in keyof P]: P[K] extends Readable<infer R> ? Readable<R> : Readable<P[K]>;
+}, 'subscribe'>;
 
-type PropsMapStore<T extends Props> = PropsStore<T> & Readable<T>;
 
-function record<T extends Props>(
+type PropsStore<P extends Props> = Omit<{
+	readonly [K in keyof P]: P[K] extends Readable<any> ? P[K] : CustomWritable<P[K]>;
+}, 'subscribe'>;
+
+function is_readable(value: any): value is Readable<any> {
+	if (value == null) {
+		return false;
+	}
+
+	return typeof value === 'object' && 'subscribe' in value && typeof value.subscribe === 'function';
+}
+
+function record<P extends Props, T>(
 	equal: Equal,
-	props: T,
-	fn: DerivedMapReaction<PropsStore<T>, T>,
+	props: P,
+	fn: DerivedMapReaction<StoreMap<P>, T>,
 	init_value?: T,
-): PropsMapStore<T> {
-	const stores = {} as PropsStore<T>;
+): PropsStore<P> & Readable<T> {
+	const stores = {} as Record<keyof P, any>;
 
-	Object.entries(props).forEach(([key, value]: [keyof T, any]) => {
-		if (typeof value === 'object' && value != null && 'subscribe' in value) {
-			stores[key] = value;
-		} else {
-			stores[key] = writable_custom(equal, value);
-		}
-	});
+	for (const key in props) {
+		const value = props[key];
+		stores[key] = is_readable(value) ? value : writable_custom(equal, value);
+	}
 
-	const store = derived_map(equal, stores, fn, init_value);
+	const store = derived_map<StoreMap<P>, T>(equal, stores as StoreMap<P>, fn, init_value);
 
 	return Object.assign(stores, store);
 }
 
 export interface RecordFactory {
-	<T extends Record<string, any>>(
-		props: T,
-		fn: DerivedMapReaction<PropsStore<T>, T>,
+	<P extends Props, T>(
+		props: P,
+		fn: DerivedMapReaction<StoreMap<P>, T>,
 		init_value?: T,
-	): PropsMapStore<T>;
+	): PropsStore<P> & Readable<T>;
 
 	use(equal: Equal): RecordFactory;
 }
 
 export function record_use(equal: Equal): RecordFactory {
-	const writable = <T extends Record<string, any>>(
-		props: T,
-		fn: DerivedMapReaction<PropsStore<T>, T>,
+	const writable = <P extends Props, T>(
+		props: P,
+		fn: DerivedMapReaction<StoreMap<P>, T>,
 		init_value?: T,
 	) => record(equal, props, fn, init_value);
 

@@ -3,9 +3,9 @@ import type { Readable, Subscriber, Unsubscriber } from 'svelte/store';
 import type { Equal } from './index';
 import { readable } from './index';
 
-export function inner_derived<T>(
+export function inner_derived<S extends Array<Readable<any>>, T>(
 	equal: Equal,
-	stores: Array<Readable<any>>,
+	stores: S,
 	process: (values: T, changed: any, set: Subscriber<T>) => void | Unsubscriber | T,
 	auto: boolean,
 	values: T,

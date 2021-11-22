@@ -130,9 +130,9 @@ export type DerivedArrayReaction<S, T> =
 
 const key = (i: number) => i;
 
-export function derived_array<T>(
+export function derived_array<S extends Stores, T>(
 	equal: Equal,
-	stores: Stores,
+	stores: S,
 	fn: DerivedArrayReaction<Stores, T>,
 	initial_value?: T,
 ): Readable<T> {
@@ -148,7 +148,7 @@ export function derived_array<T>(
 
 	const values = [];
 
-	return inner_derived(
+	return inner_derived<Array<Readable<any>>, T>(
 		equal,
 		stores_array,
 		process,
@@ -177,9 +177,9 @@ export type DerivedMapReaction<S, T> =
 	| DerivedMapAutoReaction<S, T>
 	| DerivedMapManualReaction<S, T>;
 
-export function derived_map<T>(
+export function derived_map<S extends StoreMap, T>(
 	equal: Equal,
-	stores: StoreMap,
+	stores: S,
 	fn: DerivedMapReaction<StoreMap, T>,
 	initial_value?: T,
 ): Readable<T> {
@@ -193,7 +193,7 @@ export function derived_map<T>(
 	const values = {};
 	const key = (i) => props[i];
 
-	return inner_derived<T>(
+	return inner_derived<Array<Readable<any>>, T>(
 		equal,
 		stores_array,
 		process,
