@@ -8,16 +8,25 @@ interface NoSubscribe {
 	[k: string | number]: any;
 }
 
-type Props = Record<string, Readable<any> | null | undefined | number | boolean | string | NoSubscribe> & NoSubscribe;
+type Props = Record<
+	string,
+	Readable<any> | null | undefined | number | boolean | string | NoSubscribe
+> &
+	NoSubscribe;
 
-type StoreMap<P extends Props> = Omit<{
-	[K in keyof P]: P[K] extends Readable<infer R> ? Readable<R> : Readable<P[K]>;
-}, 'subscribe'>;
+type StoreMap<P extends Props> = Omit<
+	{
+		[K in keyof P]: P[K] extends Readable<infer R> ? Readable<R> : Readable<P[K]>;
+	},
+	'subscribe'
+>;
 
-
-type PropsStore<P extends Props> = Omit<{
-	readonly [K in keyof P]: P[K] extends Readable<any> ? P[K] : CustomWritable<P[K]>;
-}, 'subscribe'>;
+type PropsStore<P extends Props> = Omit<
+	{
+		readonly [K in keyof P]: P[K] extends Readable<any> ? P[K] : CustomWritable<P[K]>;
+	},
+	'subscribe'
+>;
 
 function is_readable(value: any): value is Readable<any> {
 	if (value == null) {
