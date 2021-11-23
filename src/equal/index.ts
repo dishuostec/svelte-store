@@ -116,17 +116,10 @@ export type StoresValues<T> = T extends Readable<infer U>
 	? U
 	: { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
 
-export type DerivedArrayAutoReaction<S, T> = (values: StoresValues<S>) => T;
-
-export type DerivedArrayManualReaction<S, T> = (
-	values: StoresValues<S>,
-	set: (value: T) => void,
-	changed?: number,
-) => Unsubscriber | void;
-
-export type DerivedArrayReaction<S, T> =
-	| DerivedArrayAutoReaction<S, T>
-	| DerivedArrayManualReaction<S, T>;
+export type DerivedArrayReaction<S, T> = {
+	(values: StoresValues<S>): T;
+	(values: StoresValues<S>, set: (value: T) => void, changed?: number): Unsubscriber | void;
+};
 
 const key = (i: number) => i;
 
@@ -165,17 +158,14 @@ export type StoreMap = Record<string, Readable<any>>;
 
 export type StoreMapValues<T> = { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
 
-export type DerivedMapAutoReaction<S, T> = (values: StoreMapValues<S>) => T;
-
-export type DerivedMapManualReaction<S, T> = (
-	values: StoreMapValues<S>,
-	set: (value: T) => void,
-	changed?: string,
-) => Unsubscriber | void;
-
-export type DerivedMapReaction<S, T> =
-	| DerivedMapAutoReaction<S, T>
-	| DerivedMapManualReaction<S, T>;
+export type DerivedMapReaction<S, T> = {
+	(values: StoreMapValues<S>): T;
+	(
+		values: StoreMapValues<S>,
+		set: (value: T) => void,
+		changed?: keyof S | undefined,
+	): Unsubscriber | void;
+};
 
 export function derived_map<S extends StoreMap, T>(
 	equal: Equal,
