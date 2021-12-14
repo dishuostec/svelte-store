@@ -23,7 +23,7 @@
 		"lint": "prettier --check --plugin-search-dir=. . && eslint .",
 		"format": "prettier --write --plugin-search-dir=. .",
 		"test": "mocha",
-		"prepublishOnly": "pnpm test && pnpm build && pnpm tsd"
+		"prepublishOnly": "pnpm build && pnpm test && pnpm tsd"
 	},
 	"devDependencies": {
 		"@types/mocha": "^9.0.0",

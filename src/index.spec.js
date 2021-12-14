@@ -1,5 +1,5 @@
 import * as assert from 'node:assert';
-import { readable, writable, derived } from './index';
+import { readable, writable, derived } from '../dist/index.js';
 import { get } from 'svelte/store';
 
 describe('store', () => {

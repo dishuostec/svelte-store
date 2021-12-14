@@ -1,4 +1,3 @@
 module.exports = {
-	spec: './src/**/*.spec.ts',
-	require: ['sucrase/register'],
+	spec: './src/**/*.spec.js',
 };
