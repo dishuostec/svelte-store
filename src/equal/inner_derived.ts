@@ -1,7 +1,7 @@
 import { is_function, noop, run_all, subscribe } from 'svelte/internal';
 import type { Readable, Subscriber, Unsubscriber } from 'svelte/store';
 import type { Equal } from './index';
-import { readable } from './index';
+import { readable } from './index.js';
 
 export function inner_derived<S extends Array<Readable<any>>, T>(
 	equal: Equal,

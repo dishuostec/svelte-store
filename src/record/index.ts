@@ -1,6 +1,6 @@
 import type { Readable } from 'svelte/store';
 import type { CustomWritable, Equal, DerivedMapReaction } from '../equal';
-import { writable as writable_custom, derived_map } from '../equal';
+import { writable as writable_custom, derived_map } from '../equal/index.js';
 
 interface NoSubscribe {
 	subscribe?: never;

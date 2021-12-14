@@ -1,4 +1,4 @@
-import { readable } from '../index';
+import { readable } from '../index.js';
 import type { Readable } from 'svelte/store';
 
 type GetNow = () => number;

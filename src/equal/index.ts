@@ -7,7 +7,7 @@ import type {
 	Updater,
 	Writable,
 } from 'svelte/store';
-import { inner_derived } from './inner_derived';
+import { inner_derived } from './inner_derived.js';
 
 export type Equal = (a: any, b: any) => boolean;
 

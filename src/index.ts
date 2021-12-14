@@ -6,7 +6,7 @@ import {
 	derived_array as derived_custom,
 	readable as readable_custom,
 	writable as writable_custom,
-} from './equal';
+} from './equal/index.js';
 
 export interface WritableFactory {
 	<T>(value?: T, start?: StartStopNotifier<T>): CustomWritable<T>;
