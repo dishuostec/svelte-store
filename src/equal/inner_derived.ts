@@ -10,6 +10,8 @@ interface InnerDerivedParams<S extends Array<Readable<any>>, T, V> {
 	values: V;
 	key: (i: number) => keyof V;
 	initial_value?: T;
+	init?: () => Unsubscriber | void,
+	changed?: Subscriber<T>
 }
 
 export function inner_derived<S extends Array<Readable<any>>, T, V>({
@@ -19,6 +21,8 @@ export function inner_derived<S extends Array<Readable<any>>, T, V>({
 	values,
 	key,
 	initial_value,
+	init,
+	changed,
 }: InnerDerivedParams<S, T, V>): Readable<T> {
 	return readable({
 		equal,
@@ -63,5 +67,7 @@ export function inner_derived<S extends Array<Readable<any>>, T, V>({
 				cleanup();
 			};
 		},
+		init,
+		changed,
 	});
 }

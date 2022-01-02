@@ -39,6 +39,8 @@ interface WritableConfig<T> {
 	value?: T,
 	start?: StartStopNotifier<T>,
 	equal?: Equal,
+	init?: () => Unsubscriber | void,
+	changed?: Subscriber<T>
 }
 
 export function writable<T>(): CustomWritable<T>
@@ -52,9 +54,12 @@ export function writable<T>({
 	equal = default_equal,
 	start = noop,
 	value,
+	init,
+	changed,
 }: WritableConfig<T> = {}): CustomWritable<T> {
 
 	let stop: Unsubscriber;
+	let destroy: Unsubscriber;
 	const subscribers: Set<SubscribeInvalidateTuple<T>> = new Set();
 
 	function process(value: T): void {
@@ -70,6 +75,8 @@ export function writable<T>({
 					subscriber_queue[i][0](subscriber_queue[i + 1]);
 				}
 				subscriber_queue.length = 0;
+
+				changed?.(value);
 			}
 		}
 	}
@@ -89,6 +96,7 @@ export function writable<T>({
 		const subscriber: SubscribeInvalidateTuple<T> = [run, invalidate];
 		subscribers.add(subscriber);
 		if (subscribers.size === 1) {
+			destroy = init?.() || noop;
 			stop = start(set) || noop;
 		}
 		run(value);
@@ -98,6 +106,8 @@ export function writable<T>({
 			if (subscribers.size === 0) {
 				stop();
 				stop = null;
+				destroy();
+				destroy = null;
 			}
 		};
 	}
@@ -127,11 +137,17 @@ export type DerivedArrayReaction<S, T> = {
 
 const key = (i: number) => i;
 
-export function derived_array<S extends Stores, T>(
-	equal: Equal,
-	stores: S,
+interface DerivedArrayConfig<S, T> {
 	fn: DerivedArrayReaction<S, T>,
+	equal?: Equal,
 	initial_value?: T,
+	init?: () => Unsubscriber | void,
+	changed?: Subscriber<T>
+}
+
+export function derived_array<S extends Stores, T>(
+	stores: S,
+	{ changed, equal, fn, init, initial_value }: DerivedArrayConfig<S, T>,
 ): Readable<T> {
 	const single = !Array.isArray(stores);
 	const stores_array: Array<Readable<any>> = single
@@ -146,12 +162,14 @@ export function derived_array<S extends Stores, T>(
 			fn(single ? values[0] : values, set, changed);
 
 	return inner_derived<Array<Readable<any>>, T, any[]>({
-		equal: equal,
+		equal,
 		stores: stores_array,
 		process,
 		values: [],
 		key,
-		initial_value: initial_value,
+		initial_value,
+		init,
+		changed,
 	});
 }
 
@@ -170,11 +188,17 @@ export type DerivedMapReaction<S, T> = {
 	): Unsubscriber | void;
 };
 
-export function derived_map<S extends StoreMap, T>(
-	equal: Equal,
-	stores: S,
+interface DerivedMapConfig<S, T> {
 	fn: DerivedMapReaction<S, T>,
+	equal?: Equal,
 	initial_value?: T,
+	init?: () => Unsubscriber | void,
+	changed?: Subscriber<T>
+}
+
+export function derived_map<S extends StoreMap, T>(
+	stores: S,
+	{ changed, equal, fn, init, initial_value }: DerivedMapConfig<S, T>,
 ): Readable<T> {
 	const props = Object.keys(stores);
 	const stores_array = props.map((key) => stores[key]);
@@ -188,11 +212,13 @@ export function derived_map<S extends StoreMap, T>(
 	const key = (i) => props[i];
 
 	return inner_derived<Array<Readable<any>>, T, Record<string, any>>({
-		equal: equal,
+		equal,
 		stores: stores_array,
 		process,
 		values: {},
 		key,
 		initial_value,
+		init,
+		changed,
 	});
 }
