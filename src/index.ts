@@ -16,7 +16,7 @@ export interface WritableFactory {
 
 export function writable_use(equal: Equal): WritableFactory {
 	const writable = <T>(value?: T, start?: StartStopNotifier<T>) =>
-		writable_custom(equal, value, start);
+		writable_custom({ equal, value, start });
 
 	writable.use = writable_use;
 
@@ -33,7 +33,7 @@ export interface ReadableFactory {
 
 export function readable_use(equal: Equal): ReadableFactory {
 	const readable = <T>(value?: T, start?: StartStopNotifier<T>) =>
-		readable_custom(equal, value, start);
+		readable_custom({ equal, value, start });
 
 	readable.use = readable_use;
 
@@ -53,7 +53,7 @@ export function derived_use(equal: Equal): DerivedFactory {
 		stores: S,
 		fn: DerivedArrayReaction<S, T>,
 		initial_value?: T,
-	) => derived_custom(equal, stores, fn, initial_value);
+	) => derived_custom(stores, { equal, fn, initial_value });
 
 	derived.use = derived_use;
 

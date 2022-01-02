@@ -3,57 +3,65 @@ import type { Readable, Subscriber, Unsubscriber } from 'svelte/store';
 import type { Equal } from './index';
 import { readable } from './index.js';
 
-export function inner_derived<S extends Array<Readable<any>>, T>(
-	equal: Equal,
-	stores: S,
-	process: (values: T, changed: any, set: Subscriber<T>) => void | Unsubscriber | T,
-	auto: boolean,
-	values: T,
-	key: (i: number) => keyof T,
-	initial_value?: T,
-): Readable<T> {
-	return readable(equal, initial_value, (set) => {
-		let inited = false;
+interface InnerDerivedParams<S extends Array<Readable<any>>, T, V> {
+	equal: Equal;
+	stores: S;
+	process: (values: V, set: Subscriber<T>, changed?: keyof V) => void | Unsubscriber;
+	values: V;
+	key: (i: number) => keyof V;
+	initial_value?: T;
+}
 
-		let pending = 0;
-		let cleanup = noop;
+export function inner_derived<S extends Array<Readable<any>>, T, V>({
+	equal,
+	stores,
+	process,
+	values,
+	key,
+	initial_value,
+}: InnerDerivedParams<S, T, V>): Readable<T> {
+	return readable({
+		equal,
+		value: initial_value,
+		start: (set) => {
+			let inited = false;
 
-		const sync = (k?: any) => {
-			if (pending) {
-				return;
-			}
-			cleanup();
-			const result = process(values, k, set);
-			if (auto) {
-				set(result as T);
-			} else {
+			let pending = 0;
+			let cleanup = noop;
+
+			const sync = (k?: any) => {
+				if (pending) {
+					return;
+				}
+				cleanup();
+				const result = process(values, set, k);
 				cleanup = is_function(result) ? (result as Unsubscriber) : noop;
-			}
-		};
+			};
 
-		const unsubscribers = stores.map((store, i) => {
-			const k = key(i);
-			return subscribe(
-				store,
-				(value) => {
-					values[k] = value;
-					pending &= ~(1 << i);
-					if (inited) {
-						sync(k);
-					}
-				},
-				() => {
-					pending |= 1 << i;
-				},
-			);
-		});
+			const unsubscribers = stores.map((store, i) => {
+				const k = key(i);
+				return subscribe(
+					store,
+					(value) => {
+						values[k] = value;
+						pending &= ~(1 << i);
+						if (inited) {
+							sync(k);
+						}
+					},
+					() => {
+						pending |= 1 << i;
+					},
+				);
+			});
 
-		inited = true;
-		sync();
+			inited = true;
+			sync();
 
-		return function stop() {
-			run_all(unsubscribers);
-			cleanup();
-		};
+			return function stop() {
+				run_all(unsubscribers);
+				cleanup();
+			};
+		},
 	});
 }

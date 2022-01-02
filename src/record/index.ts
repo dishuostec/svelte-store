@@ -40,16 +40,16 @@ function record<P extends Props, T>(
 	equal: Equal,
 	props: P,
 	fn: DerivedMapReaction<StoreMap<P>, T>,
-	init_value?: T,
+	initial_value?: T,
 ): PropsStore<P> & Readable<T> {
 	const stores = {} as Record<keyof P, any>;
 
 	for (const key in props) {
 		const value = props[key];
-		stores[key] = is_readable(value) ? value : writable_custom(equal, value);
+		stores[key] = is_readable(value) ? value : writable_custom({ equal, value });
 	}
 
-	const store = derived_map<StoreMap<P>, T>(equal, stores as StoreMap<P>, fn, init_value);
+	const store = derived_map<StoreMap<P>, T>(stores as StoreMap<P>, { equal, fn, initial_value });
 
 	return Object.assign(stores, store);
 }
