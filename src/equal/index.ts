@@ -36,16 +36,15 @@ export function readable<T>(config: WritableConfig<T> = {}): Readable<T> {
 }
 
 interface WritableConfig<T> {
-	value?: T,
-	start?: StartStopNotifier<T>,
-	equal?: Equal,
-	init?: () => Unsubscriber | void,
-	changed?: Subscriber<T>
+	value?: T;
+	start?: StartStopNotifier<T>;
+	equal?: Equal;
+	init?: () => Unsubscriber | void;
+	changed?: Subscriber<T>;
 }
 
-export function writable<T>(): CustomWritable<T>
-export function writable<T>(config: WritableConfig<T>): CustomWritable<T>
-
+export function writable<T>(): CustomWritable<T>;
+export function writable<T>(config: WritableConfig<T>): CustomWritable<T>;
 
 /**
  * Create a `Writable` store that allows both updating and reading by subscription.
@@ -57,7 +56,6 @@ export function writable<T>({
 	init,
 	changed,
 }: WritableConfig<T> = {}): CustomWritable<T> {
-
 	let stop: Unsubscriber;
 	let destroy: Unsubscriber;
 	const subscribers: Set<SubscribeInvalidateTuple<T>> = new Set();
@@ -138,11 +136,11 @@ export type DerivedArrayReaction<S, T> = {
 const key = (i: number) => i;
 
 interface DerivedArrayConfig<S, T> {
-	fn: DerivedArrayReaction<S, T>,
-	equal?: Equal,
-	initial_value?: T,
-	init?: () => Unsubscriber | void,
-	changed?: Subscriber<T>
+	fn: DerivedArrayReaction<S, T>;
+	equal?: Equal;
+	initial_value?: T;
+	init?: () => Unsubscriber | void;
+	changed?: Subscriber<T>;
 }
 
 export function derived_array<S extends Stores, T>(
@@ -159,7 +157,7 @@ export function derived_array<S extends Stores, T>(
 	const process = auto
 		? (values: StoresValues<S>, set: Subscriber<T>) => set(fn(single ? values[0] : values))
 		: (values: StoresValues<S>, set: Subscriber<T>, changed: any) =>
-			fn(single ? values[0] : values, set, changed);
+				fn(single ? values[0] : values, set, changed);
 
 	return inner_derived<Array<Readable<any>>, T, any[]>({
 		equal,
@@ -189,11 +187,11 @@ export type DerivedMapReaction<S, T> = {
 };
 
 interface DerivedMapConfig<S, T> {
-	fn: DerivedMapReaction<S, T>,
-	equal?: Equal,
-	initial_value?: T,
-	init?: () => Unsubscriber | void,
-	changed?: Subscriber<T>
+	fn: DerivedMapReaction<S, T>;
+	equal?: Equal;
+	initial_value?: T;
+	init?: () => Unsubscriber | void;
+	changed?: Subscriber<T>;
 }
 
 export function derived_map<S extends StoreMap, T>(
@@ -205,9 +203,7 @@ export function derived_map<S extends StoreMap, T>(
 
 	const auto = fn.length < 2;
 
-	const process = auto
-		? (values: StoreMapValues<S>, set: Subscriber<T>) => set(fn(values))
-		: fn;
+	const process = auto ? (values: StoreMapValues<S>, set: Subscriber<T>) => set(fn(values)) : fn;
 
 	const key = (i) => props[i];
 
