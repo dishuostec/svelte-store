@@ -6,7 +6,7 @@ import type { Equal } from './writable';
 type ArrayStores = Array<Readable<any>>;
 type ArrayStoresValues<T> = { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
 
-interface DerivedConfig<S extends ArrayStores, T> {
+export interface DerivedConfig<S extends ArrayStores, T> {
 	equal?: Equal;
 	stores: S;
 	process: (
