@@ -23,7 +23,7 @@
 		"lint": "prettier --check --plugin-search-dir=. . && eslint .",
 		"format": "prettier --write --plugin-search-dir=. .",
 		"test": "ts-mocha -p tsconfig.test.json src/**/*.spec.ts",
-		"test:type": "ts-mocha --type-check -p tsconfig.test.json src/**/*.spec.ts",
+		"check": "tsc --noEmit",
 		"prepublishOnly": "pnpm build && pnpm test && pnpm tsd"
 	},
 	"devDependencies": {
