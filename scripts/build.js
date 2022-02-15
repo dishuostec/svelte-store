@@ -1,11 +1,6 @@
 import esbuild from 'esbuild';
-import glob from 'fast-glob';
 import fs from 'fs';
 import path from 'path';
-
-const target = 'dist';
-
-fs.rmSync(target, { recursive: true, force: true });
 
 function normalize(...args) {
 	let target = path.join(...args);
@@ -17,63 +12,81 @@ function normalize(...args) {
 	return target;
 }
 
-function build(file) {
-	const dir = path.dirname(file).slice(4);
-	const ext = path.extname(file);
-	const name = path.basename(file, ext);
-	const is_default_module = name === 'index';
-
-	const import_file = normalize(dir, name + '.js');
-	const type_file = normalize('types', dir, name + '.d.ts');
-	// const require_file = normalize(dir, name + '.cjs');
-
-	const default_options = {
-		entryPoints: [file],
-		minify: true,
-	};
-
-	esbuild.buildSync({
-		...default_options,
-		outfile: path.join(target, import_file),
-		format: 'esm',
-	});
-
-	// esbuild.buildSync({
-	// 	...default_options,
-	// 	outfile: path.join(target, require_file),
-	// 	format: 'cjs',
-	// });
-
-	if (dir && is_default_module) {
-		fs.writeFileSync(
-			path.join(target, dir, 'index.d.ts'),
-			`export * from '../types/${dir}/index';`,
-		);
-		fs.writeFileSync(
-			path.join(target, dir, 'package.json'),
-			JSON.stringify(
-				{
-					type: 'module',
-					// main: './index.cjs',
-					module: './index.js',
-					types: './index.d.ts',
-				},
-				null,
-				'  ',
-			),
-		);
-	}
-
-	const module_name = normalize(dir, is_default_module ? '' : name);
-
-	return {
-		[module_name]: {
-			types: type_file,
-			import: import_file,
-			// require: require_file,
-		},
-	};
+function write_package_json(dir, json) {
+	fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify(json, null, '  '), 'utf-8');
 }
+
+const target = 'dist';
+
+fs.rmSync(target, { recursive: true, force: true });
+fs.mkdirSync(target);
+
+['README.md'].forEach((file) => {
+	fs.copyFileSync(file, normalize(target, file));
+});
+
+const module_exports = { './package.json': './package.json' };
+
+fs.readdirSync('src')
+	.filter((dir) => fs.statSync(`src/${dir}`).isDirectory())
+	.forEach((dir) => {
+		const outdir = path.join(target, dir);
+
+		const files = fs.readdirSync(`src/${dir}`).filter((file) => !file.endsWith('.spec.ts'));
+
+		const entryPoints = files.map((file) => normalize('src', dir, file));
+		esbuild.buildSync({
+			entryPoints,
+			minify: true,
+			outdir: outdir,
+			format: 'esm',
+		});
+
+		const pkg_info = {
+			type: 'module',
+		};
+
+		if (files.includes('index.ts')) {
+			Object.assign(pkg_info, {
+				main: './index',
+				module: './index.js',
+				types: './index.d.ts',
+			});
+		} else {
+			const exports = {
+				'./package.json': './package.json',
+			};
+
+			files.forEach((file) => {
+				const ext = path.extname(file);
+				const basename = path.basename(file, ext);
+				exports['./' + basename] = {
+					types: './' + basename + '.d.ts',
+					import: './' + basename + '.js',
+				};
+			});
+
+			Object.assign(pkg_info, { exports });
+		}
+
+		write_package_json(outdir, pkg_info);
+
+		files.forEach((file) => {
+			const ext = path.extname(file);
+			const basename = path.basename(file, ext);
+
+			const module_path = [dir === 'origin' ? '.' : dir];
+			if (basename !== 'index') {
+				module_path.push(basename);
+			}
+
+			const module = normalize(...module_path);
+			module_exports[module] = {
+				types: `./${dir}/${basename}.d.ts`,
+				import: `./${dir}/${basename}.js`,
+			};
+		});
+	});
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
@@ -81,22 +94,8 @@ delete pkg.scripts;
 delete pkg.devDependencies;
 delete pkg.publishConfig;
 
-pkg.module = 'index.js';
-// pkg.main = 'index.cjs';
-pkg.types = 'types/index.d.ts';
-pkg.exports = {
-	'./package.json': './package.json',
-	'./types': './types/index.d.ts',
-	...glob
-		.sync('src/**/*.ts', {
-			ignore: ['**/*.spec.ts'],
-		})
-		.reduce((exports, file) => {
-			return {
-				...exports,
-				...build(file),
-			};
-		}, {}),
-};
+pkg.module = 'origin/index.js';
+pkg.types = 'origin/index.d.ts';
+pkg.exports = module_exports;
 
-fs.writeFileSync(`${target}/package.json`, JSON.stringify(pkg, null, '  '), 'utf8');
+write_package_json(target, pkg);
