@@ -3,7 +3,7 @@ import type { Readable, Subscriber, Unsubscriber } from 'svelte/store';
 import { create_readable, TouchableReadable } from './readable';
 import type { Equal } from './writable';
 
-type ArrayStores = [Readable<any>, ...Array<Readable<any>>] | Array<Readable<any>>;
+type ArrayStores = Array<Readable<any>>;
 type ArrayStoresValues<T> = { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
 
 interface DerivedConfig<S extends ArrayStores, T> {
@@ -19,7 +19,7 @@ interface DerivedConfig<S extends ArrayStores, T> {
 	changed_only?: boolean;
 }
 
-export function create_derived<S extends Array<Readable<any>>, T>({
+export function create_derived<S extends ArrayStores, T>({
 	equal,
 	stores,
 	process,
