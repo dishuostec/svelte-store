@@ -1,6 +1,6 @@
 {
 	"name": "@dishuostec/svelte-store",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "Touchable store",
 	"keywords": [
 		"svelte store",
@@ -10,7 +10,6 @@
 		"countdown store",
 		"derived record store"
 	],
-	"access": "public",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/dishuostec/svelte-store.git"
@@ -22,6 +21,8 @@
 	},
 	"homepage": "https://github.com/dishuostec/svelte-store#readme",
 	"publishConfig": {
+		"access": "public",
+		"registry": "https://registry.npmjs.org/",
 		"directory": "dist"
 	},
 	"scripts": {
@@ -31,7 +32,7 @@
 		"format": "prettier --write --plugin-search-dir=. .",
 		"test": "ts-mocha -p tsconfig.test.json src/**/*.spec.ts",
 		"check": "tsc --noEmit",
-		"release": "pnpm test && pnpm build && pnpm tsd && git commit -am $npm_package_version && git tag $npm_package_version && git push && git push --tags && pnpm publish --access public"
+		"release": "pnpm test && pnpm build && pnpm tsd && git commit -am $npm_package_version && git tag $npm_package_version && git push && git push --tags && pnpm publish"
 	},
 	"devDependencies": {
 		"@types/mocha": "^9.1.0",

@@ -92,7 +92,7 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
 delete pkg.scripts;
 delete pkg.devDependencies;
-delete pkg.publishConfig;
+delete pkg.publishConfig.directory;
 
 pkg.module = 'origin/index.js';
 pkg.types = 'origin/index.d.ts';
