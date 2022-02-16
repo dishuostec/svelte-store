@@ -1,7 +1,16 @@
 {
 	"name": "@dishuostec/svelte-store",
-	"version": "0.1.3",
-	"description": "",
+	"version": "1.0.0",
+	"description": "Touchable store",
+	"keywords": [
+		"svelte store",
+		"deep equal",
+		"touchable store",
+		"stopwatch store",
+		"countdown store",
+		"derived record store"
+	],
+	"access": "public",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/dishuostec/svelte-store.git"
@@ -13,8 +22,6 @@
 	},
 	"homepage": "https://github.com/dishuostec/svelte-store#readme",
 	"publishConfig": {
-		"access": "public",
-		"registry": "http://npm.release",
 		"directory": "dist"
 	},
 	"scripts": {
@@ -24,25 +31,23 @@
 		"format": "prettier --write --plugin-search-dir=. .",
 		"test": "ts-mocha -p tsconfig.test.json src/**/*.spec.ts",
 		"check": "tsc --noEmit",
-		"prepublishOnly": "pnpm build && pnpm test && pnpm tsd"
+		"release": "pnpm test && pnpm build && pnpm tsd && git commit -am $npm_package_version && git tag $npm_package_version && git push && git push --tags && pnpm publish --access public"
 	},
 	"devDependencies": {
-		"@types/expect": "^24.3.0",
-		"@types/mocha": "^9.0.0",
-		"@types/node": "^16.11.9",
+		"@types/mocha": "^9.1.0",
+		"@types/node": "^17.0.18",
 		"@typescript-eslint/eslint-plugin": "^4.33.0",
 		"@typescript-eslint/parser": "^4.33.0",
-		"esbuild": "^0.13.15",
+		"esbuild": "^0.14.21",
 		"eslint": "^7.32.0",
 		"eslint-config-prettier": "^8.3.0",
 		"eslint-plugin-import": "^2.25.3",
-		"fast-glob": "^3.2.7",
 		"mocha": "^9.1.3",
-		"prettier": "^2.4.1",
+		"prettier": "^2.5.1",
 		"sucrase": "^3.20.3",
-		"svelte": "^3.44.2",
+		"svelte": "^3.46.4",
 		"ts-mocha": "^9.0.2",
-		"typescript": "^4.5.2"
+		"typescript": "^4.5.5"
 	},
 	"type": "module",
 	"dependencies": {
