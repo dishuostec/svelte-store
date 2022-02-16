@@ -20,7 +20,7 @@ describe('store', () => {
 			await delay(duration);
 
 			assert.equal(values.filter((d) => d >= now).length, values.length);
-			assert.equal(values.length, 6);
+			assert.ok(values.length >= 6 && values.length <= 7);
 
 			unsubscribe();
 		});
@@ -42,7 +42,7 @@ describe('store', () => {
 			await delay(duration);
 
 			assert.equal(values.filter((d) => d <= duration).length, values.length);
-			assert.equal(values.length, 6);
+			assert.ok(values.length >= 6 && values.length <= 7);
 
 			unsubscribe();
 		});
