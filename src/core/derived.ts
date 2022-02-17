@@ -85,17 +85,12 @@ export type Stores =
 /** One or more values from `Readable` stores. */
 export type StoresValues<T> = T extends Readable<infer U> ? U : ArrayStoresValues<T>;
 
-export function array_derived<T>({
-	stores,
-	fn,
-	initial_value,
-	start,
-}: {
-	stores: Stores;
-	fn: Function;
-	initial_value?: T;
-	start?: () => Unsubscriber | void;
-}) {
+export function array_derived<T>(
+	equal: Equal | undefined,
+	stores: Stores,
+	fn: Function,
+	...rest: any[]
+) {
 	const single = !Array.isArray(stores);
 	const stores_array: ArrayStores = single
 		? [stores as Readable<any>]
@@ -103,7 +98,8 @@ export function array_derived<T>({
 
 	const auto = fn.length < 2;
 
-	return {
+	const config: DerivedConfig<ArrayStores, T> = {
+		equal,
 		stores: stores_array,
 		process(values: StoresValues<ArrayStores>, set: Subscriber<T>) {
 			const args = single ? values[0] : values;
@@ -114,7 +110,16 @@ export function array_derived<T>({
 				return fn(args, set);
 			}
 		},
-		initial_value,
-		start,
 	};
+
+	if (rest.length) {
+		if (is_function(rest[0])) {
+			config.start = rest[0];
+		} else {
+			config.initial_value = rest[0];
+			config.start = rest[1];
+		}
+	}
+
+	return create_derived(config);
 }

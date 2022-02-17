@@ -1,6 +1,6 @@
 import type { Unsubscriber } from 'svelte/store';
 import { noop } from 'svelte/internal';
-import { array_derived, create_derived, Stores, StoresValues } from '../core/derived';
+import { array_derived, Stores, StoresValues } from '../core/derived';
 import { create_readable, TouchableReadable } from '../core/readable';
 import { create_writable, StartStopNotifier, TouchableWritable } from '../core/writable';
 import equal from 'fast-deep-equal';
@@ -23,47 +23,32 @@ export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Touc
 	return create_writable({ equal, start, value });
 }
 
-/**
- * Derived value store by synchronizing one or more readable stores and
- * applying an aggregation function over its input values.
- *
- * @param stores - input stores
- * @param fn - function callback that aggregates the values
- * @param initial_value - when used asynchronously
- */
 export function derived<S extends Stores, T>(
 	stores: S,
 	fn: (values: StoresValues<S>, set: (value: T) => void) => Unsubscriber | void,
 	initial_value?: T,
+	start?: () => Unsubscriber | void,
 ): TouchableReadable<T>;
 
-/**
- * Derived value store by synchronizing one or more readable stores and
- * applying an aggregation function over its input values.
- *
- * @param stores - input stores
- * @param fn - function callback that aggregates the values
- * @param initial_value - initial value
- */
+export function derived<S extends Stores, T>(
+	stores: S,
+	fn: (values: StoresValues<S>, set: (value: T) => void) => Unsubscriber | void,
+	start: () => Unsubscriber | void,
+): TouchableReadable<T>;
+
 export function derived<S extends Stores, T>(
 	stores: S,
 	fn: (values: StoresValues<S>) => T,
 	initial_value?: T,
+	start?: () => Unsubscriber | void,
 ): TouchableReadable<T>;
 
-/**
- * Derived value store by synchronizing one or more readable stores and
- * applying an aggregation function over its input values.
- *
- * @param stores - input stores
- * @param fn - function callback that aggregates the values
- */
 export function derived<S extends Stores, T>(
 	stores: S,
 	fn: (values: StoresValues<S>) => T,
+	start: () => Unsubscriber | void,
 ): TouchableReadable<T>;
 
-export function derived<T>(stores: Stores, fn: Function, initial_value?: T): TouchableReadable<T> {
-	const config = array_derived<T>({ stores, fn, initial_value });
-	return create_derived({ ...config, equal });
+export function derived<T>(...args: [Stores, Function, ...any]): TouchableReadable<T> {
+	return array_derived<T>(equal, ...args);
 }

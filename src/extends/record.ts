@@ -1,3 +1,4 @@
+import { is_function } from 'svelte/internal';
 import type { Readable, Unsubscriber } from 'svelte/store';
 import type { TouchableReadable } from '../core/readable';
 import { create_derived, DerivedConfig } from '../core/derived';
@@ -45,17 +46,35 @@ export function record<S extends Props, T>(
 		changed_key: string | undefined,
 	) => Unsubscriber | void,
 	initial_value?: T,
+	start?: () => Unsubscriber | void,
+): RecordStore<S, T>;
+
+export function record<S extends Props, T>(
+	props: S,
+	fn: (
+		value: PropsValue<S>,
+		set: (value: T) => void,
+		changed_key: string | undefined,
+	) => Unsubscriber | void,
+	start: () => Unsubscriber | void,
 ): RecordStore<S, T>;
 
 export function record<S extends Props, T>(
 	props: S,
 	fn: (value: PropsValue<S>) => T,
 	initial_value?: T,
+	start?: () => Unsubscriber | void,
 ): RecordStore<S, T>;
 
-export function record<S extends Props, T>(props: S, initial_value?: T): RecordStore<S, T>;
+export function record<S extends Props, T>(
+	props: S,
+	fn: (value: PropsValue<S>) => T,
+	start: () => Unsubscriber | void,
+): RecordStore<S, T>;
 
-export function record<T>(props: Props, fn: Function, initial_value?: T): RecordStore<Props, T> {
+export function record<S extends Props, T>(props: S): RecordStore<S, T>;
+
+export function record<T>(props: Props, fn?: Function, ...rest: any[]): RecordStore<Props, T> {
 	const keys: string[] = [];
 	const stores = [];
 	const props_store = {};
@@ -88,8 +107,16 @@ export function record<T>(props: Props, fn: Function, initial_value?: T): Record
 				return fn(value, set, changed_key);
 			}
 		},
-		initial_value,
 	};
+
+	if (rest.length) {
+		if (is_function(rest[0])) {
+			config.start = rest[0];
+		} else {
+			config.initial_value = rest[0];
+			config.start = rest[1];
+		}
+	}
 
 	const store = create_derived(config);
 
