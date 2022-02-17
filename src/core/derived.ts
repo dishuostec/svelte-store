@@ -89,10 +89,12 @@ export function array_derived<T>({
 	stores,
 	fn,
 	initial_value,
+	start,
 }: {
 	stores: Stores;
 	fn: Function;
 	initial_value?: T;
+	start?: () => Unsubscriber | void;
 }) {
 	const single = !Array.isArray(stores);
 	const stores_array: ArrayStores = single
@@ -113,5 +115,6 @@ export function array_derived<T>({
 			}
 		},
 		initial_value,
+		start,
 	};
 }

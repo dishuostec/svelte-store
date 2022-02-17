@@ -1,9 +1,12 @@
 import { noop, safe_not_equal } from 'svelte/internal';
-import type { Writable, StartStopNotifier, Unsubscriber, Subscriber, Updater } from 'svelte/store';
+import type { Writable, Unsubscriber, Subscriber, Updater } from 'svelte/store';
 export type Equal = (a: any, b: any) => boolean;
 
 export type Invalidator<T> = (value?: T) => void;
 type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidator<T>];
+
+/** Start and stop notification callbacks. */
+export type StartStopNotifier<T> = (set: Subscriber<T>, touch: () => void) => Unsubscriber | void;
 
 export interface TouchableWritable<T> extends Writable<T> {
 	touch(): void;
@@ -57,6 +60,10 @@ export function create_writable<T>({
 		}
 	}
 
+	function touch() {
+		process(value);
+	}
+
 	function update(fn: Updater<T>): void {
 		set(fn(value));
 	}
@@ -66,7 +73,7 @@ export function create_writable<T>({
 		subscribers.add(subscriber);
 		if (subscribers.size === 1) {
 			has_changed = false;
-			stop = start(set) || noop;
+			stop = start(set, touch) || noop;
 		}
 		run(value);
 
@@ -77,10 +84,6 @@ export function create_writable<T>({
 				stop = null;
 			}
 		};
-	}
-
-	function touch() {
-		process(value);
 	}
 
 	return { set, update, subscribe, touch };

@@ -1,8 +1,8 @@
-import type { StartStopNotifier, Unsubscriber } from 'svelte/store';
+import type { Unsubscriber } from 'svelte/store';
 import { noop } from 'svelte/internal';
 import { array_derived, create_derived, Stores, StoresValues } from '../core/derived';
 import { create_readable, TouchableReadable } from '../core/readable';
-import { create_writable, TouchableWritable } from '../core/writable';
+import { create_writable, StartStopNotifier, TouchableWritable } from '../core/writable';
 import equal from 'fast-deep-equal';
 
 /**
