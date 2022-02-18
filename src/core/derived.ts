@@ -37,14 +37,19 @@ export function create_derived<S extends ArrayStores, T>({
 
 			let pending = 0;
 			let cleanup = noop;
+			let changed = 0;
 
 			const sync = (i?: number) => {
+				if (i !== undefined) {
+					changed |= 1 << i;
+				}
 				if (pending) {
 					return;
 				}
 				cleanup();
-				const result = process(values, set, i);
+				const result = process(values, set, changed);
 				cleanup = is_function(result) ? (result as Unsubscriber) : noop;
+				changed = 0;
 			};
 
 			const unsubscribers = stores.map((store, i) => {

@@ -177,13 +177,13 @@ declare function record(obj: Record<string, any>): RecordStore<any, any>;
 
 declare function record(
 	obj: Record<string, any>,
-	callback: (data: any) => any,
+	fn: (data: any) => any,
 	initial_value?: any,
 ): RecordStore<any, any>;
 
 declare function record(
 	obj: Record<string, any>,
-	callback: (data: any, set: (value: any) => void, changed_key: string | undefined) => void,
+	fn: (data: any, set: (value: any) => void, changed_key?: Record<string, boolean> | undefined) => void,
 	initial_value?: any,
 ): RecordStore<any, any>;
 ```
@@ -213,7 +213,7 @@ unsubscribe();
 store.foo.set(3); // nothing happened
 ```
 
-Callback receives changed key as a third argument.
+Callback receives changed key map as a third argument.
 
 ```javascript
 const store = record({ foo: 0, bar: 'a' }, (data, set, changed_key) => {
@@ -226,9 +226,9 @@ const unsubscribe = store.subscribe((value) => {
 
 // output: { data: { foo: 0, bar: 'a' }, changed_key: undefined }
 
-store.foo.set(1); // output: { data: { foo: 1, bar: 'a' }, changed_key: 'foo' }
-store.foo.set(2); // output: { data: { foo: 2, bar: 'a' }, changed_key: 'foo' }
-store.bar.set('b'); // output: { data: { foo: 2, bar: 'b' }, changed_key: 'bar' }
+store.foo.set(1); // output: { data: { foo: 1, bar: 'a' }, changed_key: { foo: true } }
+store.foo.set(2); // output: { data: { foo: 2, bar: 'a' }, changed_key: { foo: true } }
+store.bar.set('b'); // output: { data: { foo: 2, bar: 'b' }, changed_key: { bar: true } }
 
 unsubscribe();
 

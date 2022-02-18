@@ -43,7 +43,7 @@ export function record<S extends Props, T>(
 	fn: (
 		value: PropsValue<S>,
 		set: (value: T) => void,
-		changed_key: string | undefined,
+		changed_key?: Record<keyof PropsValue<S>, boolean> | undefined,
 	) => Unsubscriber | void,
 	initial_value?: T,
 	start?: () => Unsubscriber | void,
@@ -54,7 +54,7 @@ export function record<S extends Props, T>(
 	fn: (
 		value: PropsValue<S>,
 		set: (value: T) => void,
-		changed_key: string | undefined,
+		changed_key?: Record<keyof PropsValue<S>, boolean> | undefined,
 	) => Unsubscriber | void,
 	start: () => Unsubscriber | void,
 ): RecordStore<S, T>;
@@ -79,8 +79,8 @@ export function record<T>(props: Props, fn?: Function, ...rest: any[]): RecordSt
 	const stores = [];
 	const props_store = {};
 
-	const simple = !fn;
-	const auto = fn && fn.length < 2;
+	const length = fn?.length;
+	const simple = length === undefined;
 
 	for (const [key, value] of Object.entries(props)) {
 		const store = is_readable(value) ? value : create_writable({ value });
@@ -92,7 +92,7 @@ export function record<T>(props: Props, fn?: Function, ...rest: any[]): RecordSt
 	const config: DerivedConfig<any, T> = {
 		equal,
 		stores,
-		process(values, set, changed) {
+		process(values, set, changed_bitmap) {
 			const value = keys.reduce((value, key, i) => {
 				value[key] = values[i];
 				return value;
@@ -100,10 +100,25 @@ export function record<T>(props: Props, fn?: Function, ...rest: any[]): RecordSt
 
 			if (simple) {
 				set(value);
-			} else if (auto) {
-				set(fn(value));
+			} else if (length < 2) {
+				return set(fn(value));
+			} else if (length < 3) {
+				return fn(value, set);
 			} else {
-				const changed_key: string | undefined = keys[changed];
+				let changed_key;
+				if (changed_bitmap) {
+					changed_key = {};
+					let i = 0;
+					let n = changed_bitmap;
+					while (n) {
+						if (n & 1) {
+							changed_key[keys[i]] = true;
+						}
+						n = n >> 1;
+						i++;
+					}
+				}
+
 				return fn(value, set, changed_key);
 			}
 		},

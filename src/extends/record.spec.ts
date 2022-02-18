@@ -5,7 +5,7 @@ import { create_readable } from '../core/readable';
 import { derived, writable } from '../deep';
 import { record } from './record';
 
-describe('store debug', () => {
+describe('store', () => {
 	const fake_observable = {
 		subscribe(fn) {
 			fn(42);
@@ -169,33 +169,39 @@ describe('store debug', () => {
 			unsubscribe();
 		});
 
-		it('prevents diamond dependency problem', () => {
+		it('prevents diamond dependency problem stec', () => {
 			const count = writable(0);
 			const values = [];
+			const changed = [];
 
-			const a = record({ a: count }, (value) => {
-				return value;
+			const a = record({ a: count }, (value, set) => {
+				// return value;
+				set(value);
 			});
 
-			const b = record({ b: count }, (value) => {
-				return value;
+			const b = record({ b: count }, (value, set) => {
+				// return value;
+				set(value);
 			});
 
-			const combined = record({ a, b }, ({ a, b }) => {
-				return { a, b };
+			const combined = record({ foo: a, bar: b }, ({ foo, bar }, set, changed_key) => {
+				changed.push(changed_key);
+				set({ foo, bar });
 			});
 
 			const unsubscribe = combined.subscribe((v) => {
 				values.push(v);
 			});
 
-			assert.deepEqual(values, [{ a: { a: 0 }, b: { b: 0 } }]);
+			assert.deepEqual(values, [{ foo: { a: 0 }, bar: { b: 0 } }]);
+			assert.deepEqual(changed, [undefined]);
 
 			count.set(1);
 			assert.deepEqual(values, [
-				{ a: { a: 0 }, b: { b: 0 } },
-				{ a: { a: 1 }, b: { b: 1 } },
+				{ foo: { a: 0 }, bar: { b: 0 } },
+				{ foo: { a: 1 }, bar: { b: 1 } },
 			]);
+			assert.deepEqual(changed, [undefined, { foo: true, bar: true }]);
 
 			unsubscribe();
 		});
