@@ -28,7 +28,7 @@ type PropsStore<P extends Props> = Omit<
 	'subscribe'
 >;
 
-type RecordStore<P extends Props, T> = PropsStore<P> & TouchableReadable<T>;
+export type RecordStore<P extends Props, T = PropsValue<P>> = PropsStore<P> & TouchableReadable<T>;
 
 function is_readable(value: any): value is Readable<any> {
 	if (value == null) {
