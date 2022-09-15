@@ -99,3 +99,7 @@ pkg.types = 'origin/index.d.ts';
 pkg.exports = module_exports;
 
 write_package_json(target, pkg);
+
+import { run } from './fix-js-ext.js';
+
+run('./dist');
