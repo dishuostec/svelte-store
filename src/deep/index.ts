@@ -1,4 +1,4 @@
-import type { Unsubscriber } from 'svelte/store';
+import type { Subscriber, Unsubscriber } from 'svelte/store';
 import { noop } from 'svelte/internal';
 import { array_derived, Stores, StoresValues } from '../core/derived';
 import { create_readable, TouchableReadable } from '../core/readable';
@@ -23,30 +23,33 @@ export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): Touc
 	return create_writable({ equal, start, value });
 }
 
+export type DerivedStartStopNotifier<T> = (set: Subscriber<T>) => DerivedUnsubscriber<T> | void;
+export type DerivedUnsubscriber<T> = (set: Subscriber<T>) => void;
+
 export function derived<S extends Stores, T>(
 	stores: S,
 	fn: (values: StoresValues<S>, set: (value: T) => void) => Unsubscriber | void,
 	initial_value?: T,
-	start?: () => Unsubscriber | void,
+	start?: DerivedStartStopNotifier<T>,
 ): TouchableReadable<T>;
 
 export function derived<S extends Stores, T>(
 	stores: S,
 	fn: (values: StoresValues<S>, set: (value: T) => void) => Unsubscriber | void,
-	start: () => Unsubscriber | void,
+	start: DerivedStartStopNotifier<T>,
 ): TouchableReadable<T>;
 
 export function derived<S extends Stores, T>(
 	stores: S,
 	fn: (values: StoresValues<S>) => T,
 	initial_value?: T,
-	start?: () => Unsubscriber | void,
+	start?: DerivedStartStopNotifier<T>,
 ): TouchableReadable<T>;
 
 export function derived<S extends Stores, T>(
 	stores: S,
 	fn: (values: StoresValues<S>) => T,
-	start: () => Unsubscriber | void,
+	start: DerivedStartStopNotifier<T>,
 ): TouchableReadable<T>;
 
 export function derived<T>(...args: [Stores, Function, ...any]): TouchableReadable<T> {

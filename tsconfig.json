@@ -29,7 +29,6 @@
 		"noUnusedParameters": true,
 		"typeRoots": ["./node_modules/@types"],
 
-		"importsNotUsedAsValues": "error",
 		"isolatedModules": true,
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true

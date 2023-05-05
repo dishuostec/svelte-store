@@ -2,10 +2,10 @@ import { is_function, noop, run_all, subscribe } from 'svelte/internal';
 import type { Readable, Subscriber, Unsubscriber } from 'svelte/store';
 import { create_readable, TouchableReadable } from './readable';
 import type { Equal } from './writable';
+import type { DerivedStartStopNotifier } from '../deep';
 
 type ArrayStores = Array<Readable<any>>;
 type ArrayStoresValues<T> = { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
-
 export interface DerivedConfig<S extends ArrayStores, T> {
 	equal?: Equal;
 	stores: S;
@@ -15,7 +15,7 @@ export interface DerivedConfig<S extends ArrayStores, T> {
 		changed?: number,
 	) => void | Unsubscriber;
 	initial_value?: T;
-	start?: () => Unsubscriber | void;
+	start?: DerivedStartStopNotifier<T>;
 	changed_only?: boolean;
 }
 
@@ -33,7 +33,7 @@ export function create_derived<S extends ArrayStores, T>({
 		start: (set) => {
 			let inited = false;
 			const values = [] as ArrayStoresValues<S>;
-			const destroy = start?.() || noop;
+			const destroy = start?.(set) || noop;
 
 			let pending = 0;
 			let cleanup = noop;
@@ -74,7 +74,7 @@ export function create_derived<S extends ArrayStores, T>({
 			return function stop() {
 				run_all(unsubscribers);
 				cleanup();
-				destroy();
+				destroy(set);
 			};
 		},
 		changed_only,

@@ -4,6 +4,7 @@ import type { TouchableReadable } from '../core/readable';
 import { create_derived, DerivedConfig } from '../core/derived';
 import { create_writable, TouchableWritable } from '../core/writable';
 import equal from 'fast-deep-equal';
+import { DerivedStartStopNotifier } from '../deep';
 
 interface NoSubscribe {
 	subscribe?: never;
@@ -46,7 +47,7 @@ export function record<S extends Props, T>(
 		changed_key?: Record<keyof PropsValue<S>, boolean> | undefined,
 	) => Unsubscriber | void,
 	initial_value?: T,
-	start?: () => Unsubscriber | void,
+	start?: DerivedStartStopNotifier<T>,
 ): RecordStore<S, T>;
 
 export function record<S extends Props, T>(
@@ -56,20 +57,20 @@ export function record<S extends Props, T>(
 		set: (value: T) => void,
 		changed_key?: Record<keyof PropsValue<S>, boolean> | undefined,
 	) => Unsubscriber | void,
-	start: () => Unsubscriber | void,
+	start: DerivedStartStopNotifier<T>,
 ): RecordStore<S, T>;
 
 export function record<S extends Props, T>(
 	props: S,
 	fn: (value: PropsValue<S>) => T,
 	initial_value?: T,
-	start?: () => Unsubscriber | void,
+	start?: DerivedStartStopNotifier<T>,
 ): RecordStore<S, T>;
 
 export function record<S extends Props, T>(
 	props: S,
 	fn: (value: PropsValue<S>) => T,
-	start: () => Unsubscriber | void,
+	start: DerivedStartStopNotifier<T>,
 ): RecordStore<S, T>;
 
 export function record<S extends Props, T>(props: S): RecordStore<S, T>;
