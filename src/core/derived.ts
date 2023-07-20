@@ -27,7 +27,7 @@ export interface DerivedConfig<S extends ArrayStores, T> {
 	process: DerivedProcessor<ArrayStoresValues<S>, T, number>;
 	initial_value?: T | undefined;
 	start?: DerivedStartStopNotifier;
-	changed_only?: boolean;
+	onChange?: (value: T, trust: boolean) => void;
 }
 
 export function create_derived<S extends ArrayStores, T>({
@@ -35,7 +35,7 @@ export function create_derived<S extends ArrayStores, T>({
 	process,
 	initial_value,
 	start,
-	changed_only,
+	onChange,
 }: DerivedConfig<S, T>): TouchableReadable<T> {
 	return create_readable({
 		value: initial_value,
@@ -86,6 +86,6 @@ export function create_derived<S extends ArrayStores, T>({
 				destroy();
 			};
 		},
-		changed_only,
+		onChange,
 	});
 }

@@ -1,5 +1,4 @@
 import type { Readable, Subscriber, Updater } from 'svelte/store';
-import { noop } from './core/utils';
 import {
 	ArrayStores,
 	ArrayStoresValues,
@@ -12,12 +11,20 @@ import {
 import { create_readable, TouchableReadable } from './core/readable';
 import { create_writable, StartStopNotifier, TouchableWritable } from './core/writable';
 
-export function readable<T>(value?: T, start?: StartStopNotifier<T>): TouchableReadable<T> {
-	return create_readable({ value, start });
+export function readable<T>(
+	value?: T,
+	start?: StartStopNotifier<T>,
+	onChange?: (value: T, trust: boolean) => void,
+): TouchableReadable<T> {
+	return create_readable({ value, start, onChange });
 }
 
-export function writable<T>(value?: T, start: StartStopNotifier<T> = noop): TouchableWritable<T> {
-	return create_writable({ start, value });
+export function writable<T>(
+	value?: T,
+	start?: StartStopNotifier<T>,
+	onChange?: (value: T, trust: boolean) => void,
+): TouchableWritable<T> {
+	return create_writable({ value, start, onChange });
 }
 
 type MayBeArray<T> = T extends [] ? never : T | Array<T>;
@@ -31,6 +38,7 @@ export function derived<S extends Stores, T>(
 	fn: DerivedProcessor<StoresValues<S>, T>,
 	initial_value?: T,
 	start?: DerivedStartStopNotifier,
+	onChange?: (value: T, trust: boolean) => void,
 ): TouchableReadable<T> {
 	const val = Array.isArray(stores) ? (d: StoresValues<S>) => d : (d: StoresValues<S>) => d[0];
 
@@ -55,5 +63,6 @@ export function derived<S extends Stores, T>(
 		},
 		initial_value,
 		start,
+		onChange,
 	});
 }

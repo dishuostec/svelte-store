@@ -36,6 +36,7 @@ export function record<P extends Props, T>(
 	fn?: DerivedProcessor<PropsValue<P>, T, Record<keyof P, true>>,
 	initial_value?: T | undefined,
 	start?: DerivedStartStopNotifier,
+	onChange?: (value: T, trust: boolean) => void,
 ): RecordStore<P, T> {
 	const keys: Array<keyof P> = [];
 	const stores = [];
@@ -101,6 +102,7 @@ export function record<P extends Props, T>(
 		},
 		initial_value,
 		start,
+		onChange,
 	});
 
 	return { ...props_store, ...store };

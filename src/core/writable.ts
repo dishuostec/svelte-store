@@ -22,7 +22,7 @@ export interface TouchableWritable<T> extends Writable<T> {
 export interface WritableConfig<T> {
 	value?: T;
 	start?: StartStopNotifier<T>;
-	changed_only?: boolean;
+	onChange?: (value: T, trust: boolean) => void;
 }
 
 const subscriber_queue = [];
@@ -30,14 +30,15 @@ const subscriber_queue = [];
 export function create_writable<T>({
 	start = noop,
 	value,
-	changed_only = false,
+	onChange,
 }: WritableConfig<T>): TouchableWritable<T> {
 	const subscribers: Set<SubscribeInvalidateTuple<T>> = new Set();
 
 	let stop: Unsubscriber;
-	let has_changed = false;
 
-	function process(value: T): void {
+	function process(value: T, trust = true): void {
+		if (onChange) onChange(value, trust);
+
 		if (stop) {
 			// store is ready
 			const run_queue = !subscriber_queue.length;
@@ -57,15 +58,12 @@ export function create_writable<T>({
 	function set(new_value: T): void {
 		if (!equal(value, new_value)) {
 			value = new_value;
-			if (!changed_only || has_changed) {
-				process(value);
-			}
-			has_changed = true;
+			process(value);
 		}
 	}
 
 	function touch() {
-		process(value);
+		process(value, false);
 	}
 
 	function update(fn: Updater<T>): void {
@@ -76,7 +74,6 @@ export function create_writable<T>({
 		const subscriber: SubscribeInvalidateTuple<T> = [run, invalidate];
 		subscribers.add(subscriber);
 		if (subscribers.size === 1) {
-			has_changed = false;
 			stop = start(set, update, touch) || noop;
 		}
 		run(value);
