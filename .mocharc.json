@@ -1,0 +1,5 @@
+{
+	"extension": ["ts"],
+	"node-option": ["loader=@esbuild-kit/esm-loader"],
+	"spec": ["src/**/*.spec.ts"]
+}

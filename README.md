@@ -39,16 +39,16 @@ unsubscribe();
 store.touch(); // called === 3
 ```
 
-## Use deep equal logic
+## Deep equal logic
 
-Use [fast-deep-equal](https://github.com/epoberezkin/fast-deep-equal) instead of `safe_not_equal` to compare value.
+[fast-deep-equal](https://github.com/epoberezkin/fast-deep-equal) is used to compare value.
 
 ```javascript
-import { writable, readable, derived } from '@dishuostec/svelte-store/deep';
+import { writable, readable, derived } from '@dishuostec/svelte-store';
 ```
 
 ```javascript
-import { writable } from '@dishuostec/svelte-store/deep';
+import { writable } from '@dishuostec/svelte-store';
 
 const store = writable({ a: 0 });
 let called = 0;
@@ -66,7 +66,7 @@ unsubscribe();
 
 ```javascript
 import { writable } from 'svelte/store';
-import { derived } from '@dishuostec/svelte-store/deep';
+import { derived } from '@dishuostec/svelte-store';
 
 const n = writable(1);
 const list = derived(n, ($n) => [Math.ceil($n / 2)]);
@@ -183,7 +183,11 @@ declare function record(
 
 declare function record(
 	obj: Record<string, any>,
-	fn: (data: any, set: (value: any) => void, changed_key?: Record<string, boolean> | undefined) => void,
+	fn: (
+		data: any,
+		set: (value: any) => void,
+		changed_key?: Record<string, boolean> | undefined,
+	) => void,
 	initial_value?: any,
 ): RecordStore<any, any>;
 ```

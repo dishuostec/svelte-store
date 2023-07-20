@@ -1,26 +1,36 @@
-import { is_function, noop, run_all, subscribe } from 'svelte/internal';
-import type { Readable, Subscriber, Unsubscriber } from 'svelte/store';
+import { is_function, noop, run_all, subscribe } from './utils';
+import type { Readable, Unsubscriber, Updater } from 'svelte/store';
 import { create_readable, TouchableReadable } from './readable';
-import type { Equal } from './writable';
-import type { DerivedStartStopNotifier } from '../deep';
 
-type ArrayStores = Array<Readable<any>>;
-type ArrayStoresValues<T> = { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
+export type StoreValue<T> = T extends Readable<infer U> ? U : never;
+
+export type ArrayStores = Array<Readable<any>>;
+export type ArrayStoresValues<T> = { [K in keyof T]: StoreValue<T[K]> };
+export type DerivedStartStopNotifier = () => Unsubscriber | void;
+
+type SimpleProcessor<V, T> = (value: V) => T;
+type ComplexProcessor<V, T, C = number> = (
+	value: V,
+	set: (v: T) => void,
+	update: (fn: Updater<T>) => void,
+	changed?: C,
+) => Unsubscriber | void;
+
+export type DerivedProcessor<S, T, C = any> = SimpleProcessor<S, T> | ComplexProcessor<S, T, C>;
+
+export function is_simple<S, T>(fn: DerivedProcessor<S, T>): fn is SimpleProcessor<S, T> {
+	return fn.length < 2;
+}
+
 export interface DerivedConfig<S extends ArrayStores, T> {
-	equal?: Equal;
 	stores: S;
-	process: (
-		values: ArrayStoresValues<S>,
-		set: Subscriber<T>,
-		changed?: number,
-	) => void | Unsubscriber;
-	initial_value?: T;
-	start?: DerivedStartStopNotifier<T>;
+	process: DerivedProcessor<ArrayStoresValues<S>, T, number>;
+	initial_value?: T | undefined;
+	start?: DerivedStartStopNotifier;
 	changed_only?: boolean;
 }
 
 export function create_derived<S extends ArrayStores, T>({
-	equal,
 	stores,
 	process,
 	initial_value,
@@ -28,12 +38,11 @@ export function create_derived<S extends ArrayStores, T>({
 	changed_only,
 }: DerivedConfig<S, T>): TouchableReadable<T> {
 	return create_readable({
-		equal,
 		value: initial_value,
-		start: (set) => {
+		start: (set, update) => {
 			let inited = false;
 			const values = [] as ArrayStoresValues<S>;
-			const destroy = start?.(set) || noop;
+			const destroy = start?.() || noop;
 
 			let pending = 0;
 			let cleanup = noop;
@@ -47,7 +56,7 @@ export function create_derived<S extends ArrayStores, T>({
 					return;
 				}
 				cleanup();
-				const result = process(values, set, changed);
+				const result = process(values, set, update, changed);
 				cleanup = is_function(result) ? (result as Unsubscriber) : noop;
 				changed = 0;
 			};
@@ -74,57 +83,9 @@ export function create_derived<S extends ArrayStores, T>({
 			return function stop() {
 				run_all(unsubscribers);
 				cleanup();
-				destroy(set);
+				destroy();
 			};
 		},
 		changed_only,
 	});
-}
-
-/** One or more `Readable`s. */
-export type Stores =
-	| Readable<any>
-	| [Readable<any>, ...Array<Readable<any>>]
-	| Array<Readable<any>>;
-
-/** One or more values from `Readable` stores. */
-export type StoresValues<T> = T extends Readable<infer U> ? U : ArrayStoresValues<T>;
-
-export function array_derived<T>(
-	equal: Equal | undefined,
-	stores: Stores,
-	fn: Function,
-	...rest: any[]
-) {
-	const single = !Array.isArray(stores);
-	const stores_array: ArrayStores = single
-		? [stores as Readable<any>]
-		: (stores as Array<Readable<any>>);
-
-	const auto = fn.length < 2;
-
-	const config: DerivedConfig<ArrayStores, T> = {
-		equal,
-		stores: stores_array,
-		process(values: StoresValues<ArrayStores>, set: Subscriber<T>) {
-			const args = single ? values[0] : values;
-
-			if (auto) {
-				set(fn(args));
-			} else {
-				return fn(args, set);
-			}
-		},
-	};
-
-	if (rest.length) {
-		if (is_function(rest[0])) {
-			config.start = rest[0];
-		} else {
-			config.initial_value = rest[0];
-			config.start = rest[1];
-		}
-	}
-
-	return create_derived(config);
 }

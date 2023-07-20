@@ -2,7 +2,7 @@ import * as assert from 'node:assert';
 import { get } from 'svelte/store';
 import type { Readable } from 'svelte/store';
 import { create_readable } from '../core/readable';
-import { derived, writable } from '../deep';
+import { derived, writable } from '../';
 import { record } from './record';
 
 describe('store', () => {
@@ -184,7 +184,7 @@ describe('store', () => {
 				set(value);
 			});
 
-			const combined = record({ foo: a, bar: b }, ({ foo, bar }, set, changed_key) => {
+			const combined = record({ foo: a, bar: b }, ({ foo, bar }, set, _update, changed_key) => {
 				changed.push(changed_key);
 				set({ foo, bar });
 			});

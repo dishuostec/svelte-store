@@ -2,18 +2,97 @@ import esbuild from 'esbuild';
 import fs from 'fs';
 import path from 'path';
 
-function normalize(...args) {
-	let target = path.join(...args);
+function build(outdir, format, ext = '.js') {
+	const base = 'src';
 
-	if (target !== '.') {
-		target = './' + target;
-	}
+	const entrypoints = findEntryponts(
+		base,
+		(file) => file.endsWith('.ts') && !file.endsWith('.spec.ts'),
+	);
 
-	return target;
+	esbuild.buildSync({
+		entryPoints: entrypoints,
+		minify: true,
+		outdir,
+		format,
+		outExtension: { '.js': ext },
+	});
 }
 
-function write_package_json(dir, json) {
-	fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify(json, null, '  '), 'utf-8');
+function findEntryponts(base, filter) {
+	const entrypoints = [];
+
+	fs.readdirSync(base).forEach((item) => {
+		const stat = fs.statSync(`${base}/${item}`);
+
+		if (stat.isFile()) {
+			if (!filter || filter(item)) entrypoints.push(path.join(base, item));
+		} else if (stat.isDirectory()) {
+			entrypoints.push(...findEntryponts(path.join(base, item), filter));
+		}
+	});
+
+	return entrypoints;
+}
+
+function generateExports(base) {
+	const distPkg = getBasePkg();
+
+	distPkg.main = './index.cjs';
+	distPkg.module = './index.js';
+
+	const exports = (distPkg.exports = {
+		'.': exportEntrypoint('./index.js'),
+		'./package.json': './package.json',
+	});
+
+	fs.readdirSync(base)
+		.filter((dir) => fs.statSync(`${base}/${dir}`).isDirectory() && dir !== 'core')
+		.forEach((dir) => {
+			fs.readdirSync(`${base}/${dir}`)
+				.filter((file) => file.endsWith('.js'))
+				.forEach((file) => {
+					const subdir = path.join(dir, path.basename(file, '.js'));
+					const filepath = './' + path.join(dir, file);
+
+					exports[`./${subdir}`] = exportEntrypoint(filepath);
+				});
+		});
+
+	fs.writeFileSync(path.join(base, 'package.json'), JSON.stringify(distPkg, null, '\t'), 'utf-8');
+}
+
+function exportEntrypoint(file) {
+	return {
+		import: file,
+		require: file.slice(0, -2) + 'cjs',
+	};
+}
+
+function getBasePkg() {
+	const pkg = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
+
+	const fieldList = [
+		'name',
+		'version',
+		'type',
+		'description',
+		'keywords',
+		'repository',
+		'author',
+		'license',
+		'bugs',
+		'homepage',
+		'peerDependencies',
+		'dependencies',
+	];
+
+	const basePkg = {};
+	for (const field of fieldList) {
+		basePkg[field] = pkg[field];
+	}
+
+	return basePkg;
 }
 
 const target = 'dist';
@@ -22,84 +101,9 @@ fs.rmSync(target, { recursive: true, force: true });
 fs.mkdirSync(target);
 
 ['README.md'].forEach((file) => {
-	fs.copyFileSync(file, normalize(target, file));
+	fs.copyFileSync(file, path.join(target, file));
 });
 
-const module_exports = { './package.json': './package.json' };
-
-fs.readdirSync('src')
-	.filter((dir) => fs.statSync(`src/${dir}`).isDirectory())
-	.forEach((dir) => {
-		const outdir = path.join(target, dir);
-
-		const files = fs.readdirSync(`src/${dir}`).filter((file) => !file.endsWith('.spec.ts'));
-
-		const entryPoints = files.map((file) => normalize('src', dir, file));
-		esbuild.buildSync({
-			entryPoints,
-			minify: true,
-			outdir: outdir,
-			format: 'esm',
-		});
-
-		const pkg_info = {
-			type: 'module',
-		};
-
-		if (files.includes('index.ts')) {
-			Object.assign(pkg_info, {
-				main: './index',
-				module: './index.js',
-				types: './index.d.ts',
-			});
-		} else {
-			const exports = {
-				'./package.json': './package.json',
-			};
-
-			files.forEach((file) => {
-				const ext = path.extname(file);
-				const basename = path.basename(file, ext);
-				exports['./' + basename] = {
-					types: './' + basename + '.d.ts',
-					import: './' + basename + '.js',
-				};
-			});
-
-			Object.assign(pkg_info, { exports });
-		}
-
-		write_package_json(outdir, pkg_info);
-
-		files.forEach((file) => {
-			const ext = path.extname(file);
-			const basename = path.basename(file, ext);
-
-			const module_path = [dir === 'origin' ? '.' : dir];
-			if (basename !== 'index') {
-				module_path.push(basename);
-			}
-
-			const module = normalize(...module_path);
-			module_exports[module] = {
-				types: `./${dir}/${basename}.d.ts`,
-				import: `./${dir}/${basename}.js`,
-			};
-		});
-	});
-
-const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-
-delete pkg.scripts;
-delete pkg.devDependencies;
-delete pkg.publishConfig.directory;
-
-pkg.module = 'origin/index.js';
-pkg.types = 'origin/index.d.ts';
-pkg.exports = module_exports;
-
-write_package_json(target, pkg);
-
-import { run } from './fix-js-ext.js';
-
-run('./dist');
+build(target, 'esm');
+build(target, 'cjs', '.cjs');
+generateExports(target);

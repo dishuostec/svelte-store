@@ -1,12 +1,19 @@
-import { noop, safe_not_equal } from 'svelte/internal';
-import type { Writable, Unsubscriber, Subscriber, Updater } from 'svelte/store';
-export type Equal = (a: any, b: any) => boolean;
+import { noop } from './utils';
+import equal from 'fast-deep-equal';
+import type {
+	Writable,
+	Unsubscriber,
+	Subscriber,
+	Updater,
+	StartStopNotifier as OriginStartStopNotifier,
+} from 'svelte/store';
 
 export type Invalidator<T> = (value?: T) => void;
 type SubscribeInvalidateTuple<T> = [Subscriber<T>, Invalidator<T>];
 
-/** Start and stop notification callbacks. */
-export type StartStopNotifier<T> = (set: Subscriber<T>, touch: () => void) => Unsubscriber | void;
+export type StartStopNotifier<T> = (
+	...args: [...Parameters<OriginStartStopNotifier<T>>, () => void]
+) => ReturnType<OriginStartStopNotifier<T>>;
 
 export interface TouchableWritable<T> extends Writable<T> {
 	touch(): void;
@@ -15,15 +22,12 @@ export interface TouchableWritable<T> extends Writable<T> {
 export interface WritableConfig<T> {
 	value?: T;
 	start?: StartStopNotifier<T>;
-	equal?: Equal;
 	changed_only?: boolean;
 }
 
 const subscriber_queue = [];
-const default_equal: Equal = (a, b) => !safe_not_equal(a, b);
 
 export function create_writable<T>({
-	equal = default_equal,
 	start = noop,
 	value,
 	changed_only = false,
@@ -73,7 +77,7 @@ export function create_writable<T>({
 		subscribers.add(subscriber);
 		if (subscribers.size === 1) {
 			has_changed = false;
-			stop = start(set, touch) || noop;
+			stop = start(set, update, touch) || noop;
 		}
 		run(value);
 

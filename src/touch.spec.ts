@@ -1,11 +1,11 @@
 import * as assert from 'node:assert';
 import { readable, writable, derived } from './index';
 
-describe('store', () => {
+describe('store.deep', () => {
 	describe('writable', () => {
 		it('is touchable', () => {
 			const count = writable(0);
-			const values = [];
+			const values: [number, number][] = [];
 			let n = 0;
 
 			const unsubscribe = count.subscribe((value) => {
@@ -66,12 +66,12 @@ describe('store', () => {
 			const a = readable(1);
 			let called = 0;
 
-			const b = derived(a, (n: number) => {
+			const b = derived(a, (n) => {
 				called += 1;
 				return n * 2;
 			});
 
-			const values = [];
+			const values: number[] = [];
 
 			const unsubscribe = b.subscribe((value) => {
 				values.push(value);
@@ -102,10 +102,10 @@ describe('store', () => {
 
 			const c = derived([a, b], ([a, b]) => {
 				called += 1;
-				return [a, b];
+				return [a, b] as [number, number];
 			});
 
-			const values = [];
+			const values: [number, number][] = [];
 
 			const unsubscribe = c.subscribe((value) => {
 				values.push(value);
@@ -116,29 +116,18 @@ describe('store', () => {
 
 			a.touch();
 			assert.equal(called, 2);
-			assert.deepEqual(values, [
-				[2, 3],
-				[2, 3],
-			]);
+			assert.deepEqual(values, [[2, 3]]);
 
 			b.touch();
 			assert.equal(called, 3);
-			assert.deepEqual(values, [
-				[2, 3],
-				[2, 3],
-				[2, 3],
-			]);
+			assert.deepEqual(values, [[2, 3]]);
 
 			unsubscribe();
 
 			a.touch();
 			b.touch();
 			assert.equal(called, 3);
-			assert.deepEqual(values, [
-				[2, 3],
-				[2, 3],
-				[2, 3],
-			]);
+			assert.deepEqual(values, [[2, 3]]);
 		});
 
 		it('prevents diamond dependency problem', () => {
@@ -164,14 +153,10 @@ describe('store', () => {
 			assert.deepEqual(values, [{ a: 0, b: 0 }]);
 
 			count.touch();
-			assert.deepEqual(values, [
-				{ a: 0, b: 0 },
-				{ a: 0, b: 0 },
-			]);
+			assert.deepEqual(values, [{ a: 0, b: 0 }]);
 
 			count.set(1);
 			assert.deepEqual(values, [
-				{ a: 0, b: 0 },
 				{ a: 0, b: 0 },
 				{ a: 1, b: 1 },
 			]);
@@ -179,8 +164,6 @@ describe('store', () => {
 			count.touch();
 			assert.deepEqual(values, [
 				{ a: 0, b: 0 },
-				{ a: 0, b: 0 },
-				{ a: 1, b: 1 },
 				{ a: 1, b: 1 },
 			]);
 
@@ -189,8 +172,6 @@ describe('store', () => {
 			count.touch();
 			assert.deepEqual(values, [
 				{ a: 0, b: 0 },
-				{ a: 0, b: 0 },
-				{ a: 1, b: 1 },
 				{ a: 1, b: 1 },
 			]);
 		});
