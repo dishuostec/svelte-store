@@ -37,8 +37,6 @@ export function create_writable<T>({
 	let stop: Unsubscriber;
 
 	function process(value: T, trust = true): void {
-		if (onChange) onChange(value, trust);
-
 		if (stop) {
 			// store is ready
 			const run_queue = !subscriber_queue.length;
@@ -52,6 +50,8 @@ export function create_writable<T>({
 				}
 				subscriber_queue.length = 0;
 			}
+
+			if (onChange) onChange(value, trust);
 		}
 	}
 
