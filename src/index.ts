@@ -1,10 +1,10 @@
-import type { Readable, Subscriber, Updater } from 'svelte/store';
+import type { Subscriber, Updater } from 'svelte/store';
 import {
 	ArrayStores,
-	ArrayStoresValues,
 	DerivedProcessor,
 	DerivedStartStopNotifier,
-	StoreValue,
+	Stores,
+	StoresValues,
 	create_derived,
 	is_simple,
 } from './core/derived';
@@ -27,12 +27,6 @@ export function writable<T>(
 	return create_writable({ value, start, onChange });
 }
 
-type MayBeArray<T> = T extends [] ? never : T | Array<T>;
-
-type Stores = MayBeArray<Readable<any>>;
-
-type StoresValues<T extends Stores> = T extends [] ? ArrayStoresValues<T> : StoreValue<T>;
-
 export function derived<S extends Stores, T>(
 	stores: S,
 	fn: DerivedProcessor<StoresValues<S>, T>,
@@ -40,7 +34,9 @@ export function derived<S extends Stores, T>(
 	start?: DerivedStartStopNotifier,
 	onChange?: (value: T, trust: boolean) => void,
 ): TouchableReadable<T> {
-	const val = Array.isArray(stores) ? (d: StoresValues<S>) => d : (d: StoresValues<S>) => d[0];
+	const val: (d: any) => StoresValues<S> = Array.isArray(stores)
+		? (d: StoresValues<S>) => d
+		: (d: StoresValues<S>) => d[0];
 
 	const process = is_simple(fn)
 		? (v: StoresValues<S>, set: Subscriber<T>) => {

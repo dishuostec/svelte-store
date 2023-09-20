@@ -2,21 +2,31 @@ import { is_function, noop, run_all, subscribe } from './utils';
 import type { Readable, Unsubscriber, Updater } from 'svelte/store';
 import { create_readable, TouchableReadable } from './readable';
 
-export type StoreValue<T> = T extends Readable<infer U> ? U : never;
+export type Stores =
+	| Readable<any>
+	| [Readable<any>, ...Array<Readable<any>>]
+	| Array<Readable<any>>;
 
-export type ArrayStores = Array<Readable<any>>;
-export type ArrayStoresValues<T> = { [K in keyof T]: StoreValue<T[K]> };
+export type ArrayStores =
+	| [Readable<any>]
+	| [Readable<any>, ...Array<Readable<any>>]
+	| Array<Readable<any>>;
+
+export type StoresValues<T> = T extends Readable<infer U>
+	? U
+	: { [K in keyof T]: T[K] extends Readable<infer U> ? U : never };
+
 export type DerivedStartStopNotifier = () => Unsubscriber | void;
 
-type SimpleProcessor<V, T> = (value: V) => T;
-type ComplexProcessor<V, T, C = number> = (
+export type SimpleProcessor<V, T> = (value: V) => T;
+export type ComplexProcessor<V, T, C = number> = (
 	value: V,
 	set: (v: T) => void,
-	update: (fn: Updater<T>) => void,
+	update?: (fn: Updater<T>) => void,
 	changed?: C,
 ) => Unsubscriber | void;
 
-export type DerivedProcessor<S, T, C = any> = SimpleProcessor<S, T> | ComplexProcessor<S, T, C>;
+export type DerivedProcessor<V, T, C = any> = SimpleProcessor<V, T> | ComplexProcessor<V, T, C>;
 
 export function is_simple<S, T>(fn: DerivedProcessor<S, T>): fn is SimpleProcessor<S, T> {
 	return fn.length < 2;
@@ -24,7 +34,7 @@ export function is_simple<S, T>(fn: DerivedProcessor<S, T>): fn is SimpleProcess
 
 export interface DerivedConfig<S extends ArrayStores, T> {
 	stores: S;
-	process: DerivedProcessor<ArrayStoresValues<S>, T, number>;
+	process: DerivedProcessor<StoresValues<S>, T, number>;
 	initial_value?: T | undefined;
 	start?: DerivedStartStopNotifier;
 	onChange?: (value: T, trust: boolean) => void;
@@ -41,7 +51,7 @@ export function create_derived<S extends ArrayStores, T>({
 		value: initial_value,
 		start: (set, update) => {
 			let inited = false;
-			const values = [] as ArrayStoresValues<S>;
+			const values = [] as StoresValues<S>;
 			const destroy = start?.() || noop;
 
 			let pending = 0;

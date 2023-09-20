@@ -31,6 +31,23 @@ function is_readable(value: any): value is Readable<unknown> {
 	return typeof value === 'object' && is_function(value.subscribe);
 }
 
+export function record<P extends Props>(props: P): RecordStore<P, PropsValue<P>>;
+export function record<P extends Props>(
+	props: P,
+	fn: undefined,
+	initial_value?: PropsValue<P> | undefined,
+	start?: DerivedStartStopNotifier,
+	onChange?: (value: PropsValue<P>, trust: boolean) => void,
+): RecordStore<P, PropsValue<P>>;
+
+export function record<P extends Props, T>(
+	props: P,
+	fn?: DerivedProcessor<PropsValue<P>, T, Record<keyof P, true>>,
+	initial_value?: T | undefined,
+	start?: DerivedStartStopNotifier,
+	onChange?: (value: T, trust: boolean) => void,
+): RecordStore<P, T>;
+
 export function record<P extends Props, T>(
 	props: P,
 	fn?: DerivedProcessor<PropsValue<P>, T, Record<keyof P, true>>,
